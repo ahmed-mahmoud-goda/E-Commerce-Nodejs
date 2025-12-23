@@ -1,0 +1,32 @@
+{
+  "name": "e-commerce",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/ahmed-mahmoud-goda/E-Commerce-Nodejs#readme",
+  "bugs": {
+    "url": "https://github.com/ahmed-mahmoud-goda/E-Commerce-Nodejs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahmed-mahmoud-goda/E-Commerce-Nodejs.git"
+  },
+  "license": "ISC",
+  "author": "AhmedGoda",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "SET NODE_ENV=development & nodemon server.js",
+    "start_prod":"SET NODE_ENV=production & nodemon server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "express-xss-sanitizer": "^2.0.1",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "mongoose": "^9.0.2"
+  }
+}
