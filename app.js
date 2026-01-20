@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const sanitize = require('./utils/sanitize.js');
 const globalErrorHandler = require('./controllers/errorController.js');
 const CustomError = require('./utils/customError.js');
+const authRoutes = require('./routes/authRoutes.js')
 
 const app = express();
 
@@ -32,6 +33,8 @@ app.use((req,res,next)=>{
 app.use(globalErrorHandler);
 
 // App Routes
+
+app.use('/api/v1/auth',authRoutes)
 
 app.use((req,res,next)=>{
     const err = new CustomError(`URL: ${req.originalUrl} is not found`,404);
