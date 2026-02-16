@@ -196,4 +196,4 @@ const updatePassword = asyncErrorHandler(async (req, res, next) => {
     createResponse(user,200,res);
 })
 
-module.exports = { protect, signup, login, verifyEmail, forgotPassword, resetPassword, updatePassword };
+module.exports = { protect,restrict, signup, login, verifyEmail, forgotPassword, resetPassword, updatePassword };
