@@ -15,7 +15,10 @@ const productSchema = mongoose.Schema({
     required: [true, "Price is required"],
     min: [0, "Price must be positive"],
   },
-  images: [String],
+  images: {
+    type:[String],
+    validate: [arr => arr.length <= 5, "Maximum 5 images allowed"]
+  },
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
