@@ -9,7 +9,9 @@ const globalErrorHandler = require('./controllers/errorController.js');
 const CustomError = require('./utils/customError.js');
 const authRoutes = require('./routes/authRoutes.js');
 const categoryRoutes = require('./routes/categoryRoutes.js');
-const productRoutes = require('./routes/productRoutes.js')
+const productRoutes = require('./routes/productRoutes.js');
+const reviewRoutes = require('./routes/reviewRoutes.js');
+const cartRoutes = require('./routes/cartRoutes.js')
 
 const app = express();
 
@@ -34,11 +36,13 @@ app.use((req,res,next)=>{
 })
 app.use(globalErrorHandler);
 
+app.use("/images", express.static("images"));
 // App Routes
-
 app.use('/api/v1/auth',authRoutes);
 app.use('/api/v1/categories',categoryRoutes);
 app.use('/api/v1/products',productRoutes);
+app.use('/api/v1/reviews',reviewRoutes);
+app.use('/api/v1/cart',cartRoutes);
 
 app.use((req,res,next)=>{
     const err = new CustomError(`URL: ${req.originalUrl} is not found`,404);

@@ -16,6 +16,25 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, , "Please enter a valid email"],
   },
+  phone:{
+    type:String,
+    required: [true, "Please enter your phone number"],
+    match: /^01[0125]\d{8}$/
+  },
+  address: {
+    city: {
+      type: String,
+      required: true
+    },
+    street: {
+      type: String,
+      required: true
+    },
+    buildingNumber: {
+      type: String,
+      required: true
+    }
+  },
   password: {
     type: String,
     required: true,
