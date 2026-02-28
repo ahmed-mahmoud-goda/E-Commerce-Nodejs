@@ -111,6 +111,17 @@ const login = asyncErrorHandler(async (req, res, next) => {
         const error = new customError("Please verify your email first", 401);
         return next(error);
     }
+    if(user.isBanned){
+        if(!user.banExpires){
+            return next(new customError("Your account has been permanently banned", 403));
+        }
+        if(user.banExpires>new Date()){
+            return next(new customError(`Your account is banned until: ${user.banExpires.toDateString()}`,403));
+        }
+        user.isBanned = false;
+        user.banExpires = null;
+        await user.save();
+    }
     createResponse(user, 200, res);
 })
 

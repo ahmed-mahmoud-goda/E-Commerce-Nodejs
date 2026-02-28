@@ -45,7 +45,9 @@ const addToCart = asyncErrorHandler(async (req,res,next)=>{
 
     res.status(200).json({
         status: "success",
-        cart
+        data:{
+            cart
+        }
     });
 })
 
@@ -55,7 +57,9 @@ const getCart = asyncErrorHandler(async (req,res,next)=>{
 
     res.status(200).json({
         status:"success",
-        cart: cart || {items:[],totalPrice:0}
+        data:{
+            cart: cart || {items:[],totalPrice:0}
+        }
     });
 })
 const removeFromCart = asyncErrorHandler(async (req,res,next)=>{
@@ -81,7 +85,9 @@ const removeFromCart = asyncErrorHandler(async (req,res,next)=>{
     await cart.save();
     res.status(200).json({
         status: "success",
-        cart
+        data:{
+            cart
+        }
     });
 })
 

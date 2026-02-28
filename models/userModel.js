@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     required: [true, "Please enter your email"],
     unique: true,
     lowercase: true,
-    validate: [validator.isEmail, , "Please enter a valid email"],
+    validate: [validator.isEmail, "Please enter a valid email"],
   },
   phone:{
     type:String,
@@ -46,13 +46,19 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["user", "admin"],
-    default: "user",
+    enum: ["customer", "manager", "deliverer", "dispatcher","stocker"],
+    default: "customer",
   },
   isVerified: {
     type: Boolean,
     default: false,
   },
+  isBanned:{
+    type: Boolean,
+    default: false,
+    select: false
+  },
+  banExpires: Date,
   verificationToken: String,
   verificationExpires: Date,
   resetToken: String,
@@ -63,6 +69,10 @@ userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
+
+userSchema.pre(/^find/,function(next){
+  this.find({isBanned:{$ne:true}})
+})
 
 userSchema.methods.comparePassword = async function (pass, passDb) {
   return await bcrypt.compare(pass, passDb);
