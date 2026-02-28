@@ -5,10 +5,10 @@ const router = express.Router();
 
 router.route('/')
     .get(categoryController.getCategories)
-    .post(authController.protect,authController.restrict('admin'),categoryController.addCategory)
+    .post(authController.protect,authController.restrict('manager','stocker'),categoryController.addCategory)
     
 router.route('/:id')
-    .delete(authController.protect,authController.restrict('admin'),categoryController.deleteCategory)
+    .delete(authController.protect,authController.restrict('manager','stocker'),categoryController.deleteCategory)
 
 
 module.exports = router;

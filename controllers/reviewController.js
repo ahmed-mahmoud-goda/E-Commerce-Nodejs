@@ -32,7 +32,9 @@ const addReview = asyncErrorHandler(async (req, res, next) => {
 
   res.status(201).json({
     status: "success",
-    data: { review }
+    data:{
+      review 
+    }
   })
 })
 
@@ -41,7 +43,7 @@ const deleteReview = asyncErrorHandler(async (req,res,next)=>{
     if(!review){
         return next(new customError("Review not found",404))
     }
-    if(!review.user.equals(req.user.id) && req.user.role !="admin"){
+    if(!review.user.equals(req.user.id) && req.user.role !="manager"){
       return next(new customError("You are not authorized to do this",403))
     }
     await review.deleteOne();
@@ -66,7 +68,9 @@ const getProductReviews = asyncErrorHandler(async(req,res,next)=>{
     count: reviews.length,
     page,
     totalPages: Math.ceil(totalReviews / limit),
-    data: { reviews }
+    data:{ 
+      reviews 
+    }
   });
 })
 
@@ -89,7 +93,9 @@ const editReview = asyncErrorHandler(async (req,res,next)=>{
 
   res.status(200).json({
     status: "success",
-    data: { review }
+    data:{ 
+      review 
+    }
   });
 
 })

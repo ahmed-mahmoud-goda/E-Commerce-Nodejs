@@ -23,17 +23,10 @@ const createOrder = asyncErrorHandler(async (req,res,next)=>{
 
     res.status(201).json({
         status:"success",
-        order
+        data:{
+            order
+        }
     });
-})
-
-const getUserOrders = asyncErrorHandler(async (req,res,next)=>{
-    const orders = await Order.find({user:req.user.id}).select("totalAmount status createdAt").sort({createdAt:-1});
-    res.status(200).json({
-        status:"success",
-        count:orders.length,
-        orders
-    })
 })
 const getAllOrders = asyncErrorHandler(async (req,res,next)=>{
     const page = parseInt(req.query.page) || 1
@@ -44,12 +37,31 @@ const getAllOrders = asyncErrorHandler(async (req,res,next)=>{
     if(req.query.status){
         filter.status = req.query.status;
     }
-    if(req.query.user){
-        filter.user = req.query.user;
+    if(["manager","dispatcher"].includes(req.user.role)){
+        if(req.query.user){
+            filter.user = req.query.user;
+        }
+        if(req.query.assigned == "false"){
+            filter.deliverer = null;
+        }
+        if(req.query.assigned == "true"){
+            filter.deliverer = { $ne: null };
+        }
+    }
+    if(req.user.role == "customer"){
+        filter.user = req.user._id;
+    }
+    else if(req.user.role == "deliverer"){
+        filter.deliverer = req.user._id;
     }
 
-    const orders = await Order.find(filter).sort({createdAt:-1}).skip(skip).limit(limit).populate("user", "name email")
+    let query = Order.find(filter).sort({createdAt:-1}).skip(skip).limit(limit).populate("user", "name email");
     
+    if(req.user.role != "customer"){
+        query.populate("deliverer", "name email");
+    }
+
+    const orders = await query;
     const totalOrders = await Order.countDocuments(filter);
     res.status(200).json({
         status:"success",
@@ -62,29 +74,64 @@ const getAllOrders = asyncErrorHandler(async (req,res,next)=>{
     })
 })
 const getOrderById = asyncErrorHandler(async (req,res,next)=>{
-    const order = await Order.findById(req.params.id);
-    if(req.user.role !== "admin" && order.user.toString() !== req.user.id){
-        return next(new customError("Not authorized to view this order",403));
+    let query = Order.findById(req.params.id);
+    if(req.user.role == "customer"){
+        query = query.select("-deliverer");
+    }
+    else{
+        query = query.populate("deliverer", "name email");
+    }
+    const order = await query;
+    if(!order){
+        return next(new customError("Order not found",404));
+    }
+    if(req.user.role == "customer" && order.user.toString()!= req.user.id){
+            return next(new customError("Not authorized to view this order",403));
     }
     res.status(200).json({
         status:"success",
-        order
+        data:{
+            order
+        }
     })
 })
 const updateOrderStatus = asyncErrorHandler(async (req,res,next)=>{
     const { status } = req.body;
-    const order = await Order.findByIdAndUpdate(
-        req.params.id,
-        {status},
-        {new:true}
-    )
+    const order = await Order.findByIdAndUpdate(req.params.id,{status},{new:true})
     if(!order){
         return next(new customError("Order not found",404));
     }
     res.status(200).json({
         status:"success",
-        order,
+        data:{
+            order
+        }
+    });
+})
+const assignDeliverer = asyncErrorHandler(async (req,res,next)=>{
+    const {delivererId} = req.body;
+    if(!delivererId){
+        return next(new customError("Deliverer ID is required",400));
+    }
+    const order = await Order.findById(req.params.id);
+    if(!order){
+        return next(new customError("Order not found", 404));
+    }
+    if(["delivered"].includes(order.status)){
+        return next(new customError("Cannot assign this order", 404));
+    }
+    const deliverer = await User.findById(delivererId);
+    if(!deliverer || deliverer.role !== "deliverer"){
+        return next(new customError("Invalid deliverer", 400));
+    }
+    order.deliverer = delivererId;
+    await order.save();
+    res.status(200).json({
+        status: "success",
+        data:{
+            order
+        }
     });
 })
 
-module.exports = {createOrder, getUserOrders,getAllOrders, getOrderById, updateOrderStatus}
+module.exports = {createOrder, getAllOrders, getOrderById, updateOrderStatus, assignDeliverer}
