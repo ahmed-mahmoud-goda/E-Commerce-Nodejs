@@ -26,7 +26,8 @@ const paymentSchema = new mongoose.Schema({
         enum: ["pending", "completed", "failed", "refunded"],
         default: "pending",
     },
-    paidAt: Date
+    paidAt: Date,
+    refundedAt: Date
 })
 
 const Payment = mongoose.model("Payment", paymentSchema);

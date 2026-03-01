@@ -2,10 +2,11 @@ const asyncErrorHandler = require('./../utils/asyncErrorHandler.js')
 const customError = require('./../utils/customError.js')
 const Review = require('./../models/reviewModel.js')
 const Product = require('./../models/productModel.js')
+const mongoose = require('mongoose')
 
 const updateProduct = async (productId)=>{
   const stats = await Review.aggregate([
-    { $match: { product: productId } },
+    { $match: { product: new mongoose.Types.ObjectId(productId) } },
     {
       $group: {
         _id: "$product",
@@ -25,10 +26,10 @@ const addReview = asyncErrorHandler(async (req, res, next) => {
     rating: req.body.rating,
     comment: req.body.comment,
     user: req.user.id,
-    product: req.body.product
+    product: req.params.id
   })
 
-  await updateProduct(req.body.product);
+  await updateProduct(req.params.id);
 
   res.status(201).json({
     status: "success",

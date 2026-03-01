@@ -3,7 +3,7 @@ const customError = require("./../utils/customError.js");
 const Order = require("./../models/orderModel.js")
 
 const createOrder = asyncErrorHandler(async (req,res,next)=>{
-    const { paymentMethod } = req.body;
+    const { paymentMethod, deliveryDays = 3, deliveryFee = 10 } = req.body;
     const cart = await Cart.findOne({ user: req.user.id });
 
     if(!cart||cart.items.length ==0){
@@ -13,8 +13,9 @@ const createOrder = asyncErrorHandler(async (req,res,next)=>{
     const order = await Order.create({
         user: req.user.id,
         items: cart.items,
-        totalAmount: cart.totalAmount,
+        totalAmount: cart.totalAmount + deliveryFee,
         paymentMethod,
+        deliveryDate: new Date(Date.now() + deliveryDays*24*60*60*1000)
     });
 
     cart.items = [];
@@ -95,12 +96,13 @@ const getOrderById = asyncErrorHandler(async (req,res,next)=>{
         }
     })
 })
-const updateOrderStatus = asyncErrorHandler(async (req,res,next)=>{
-    const { status } = req.body;
-    const order = await Order.findByIdAndUpdate(req.params.id,{status},{new:true})
+const completeDelivery = asyncErrorHandler(async (req,res,next)=>{
+    const order = await Order.findById(req.params.id);
     if(!order){
         return next(new customError("Order not found",404));
     }
+    order.status = 'delivered';
+    await order.save();
     res.status(200).json({
         status:"success",
         data:{
@@ -133,5 +135,31 @@ const assignDeliverer = asyncErrorHandler(async (req,res,next)=>{
         }
     });
 })
+const cancelOrder = asyncErrorHandler(async (req,res,next)=>{
+    const order = await Order.findById(req.params.id);
+    if(!order){
+        return next(new customError("Order not found", 404));
+    }
+    if(['delivered','cancelled'].includes(order.status)){
+        return next(new customError("Order can't be cancelled as it is already delivered/cancelled",400));
+    }
+    else if(order.isPaid){
+        const payment = await Payment.findOne({ order: order._id });
+        if(payment){
+            if (payment.status === "refunded") {
+                return next(new customError("Payment already refunded", 400));
+            }
+            if(payment.paymentMethod == "card" && payment.status == "completed"){
+            await stripe.refunds.create({payment_intent: payment.transactionId});
+            payment.status = "refunded";
+            payment.refundedAt = Date.now();
+            await payment.save();
+            }
+        }
+    }
+    order.isPaid = false;
+    order.status = "cancelled";
+    await order.save();
+})
 
-module.exports = {createOrder, getAllOrders, getOrderById, updateOrderStatus, assignDeliverer}
+module.exports = {createOrder, getAllOrders, getOrderById, completeDelivery, assignDeliverer, cancelOrder}

@@ -9,6 +9,11 @@ router.route('/')
     
 router.route('/:id')
     .get(authController.protect,orderController.getOrderById)
-    .patch(authController.protect,authController.restrict('manager','deliverer'),orderController.updateOrderStatus)
+    
+router.route('/deliver/:id')
+    .patch(authController.protect,authController.restrict('deliverer'),orderController.completeDelivery)
+
+router.route('/cancel/:id')
+    .patch(authController.protect,authController.restrict('customer','manager'),orderController.cancelOrder)
 
 module.exports = router

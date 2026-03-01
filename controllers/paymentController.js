@@ -41,7 +41,38 @@ const createPayment = asyncErrorHandler(async (req,res,next)=>{
 })
 
 const confirmPayment = asyncErrorHandler(async (req,res,next)=>{
+    const { paymentIntentId } = req.body;
+    const payment = await Payment.findOne({transactionId: paymentIntentId}).populate('order');
+    if(!payment){
+        return next(new customError("Payment not found",404));
+    }
+    if(payment.paymentMethod != "card"){
+        return next(new customError("This is for card payment only",400));
+    }
+    if(payment.status =="completed"){
+        return next(new customError("Payment already done",400));
+    }
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if(paymentIntent.status!="succeeded"){
+        payment.status = "failed";
+        await payment.save();
+        return next(new customError("Payment not successful",400));
+    }
+    payment.status = "completed";
+    payment.paidAt = new Date();
+    await payment.save();
 
+    const order = payment.order;
+    order.isPaid = true;
+    order.paidAt = new Date();
+    await order.save();
+    res.status(200).json({
+        status:"success",
+        data:{
+            payment,
+            order
+        }
+    });
 })
 
 const completeCashPayment = asyncErrorHandler(async (req,res,next)=>{
@@ -57,7 +88,8 @@ const completeCashPayment = asyncErrorHandler(async (req,res,next)=>{
     await payment.save();
 
     const order = payment.order;
-    order.status = "paid";
+    order.status = "delivered";
+    order.isPaid = true;
     order.paidAt = new Date();
     await order.save();
 
@@ -105,8 +137,4 @@ const getUserPayments = asyncErrorHandler(async (req,res,next)=>{
     });
 })
 
-const refundPayment = asyncErrorHandler(async (req,res,next)=>{
-
-})
-
-module.exports = {createPayment, confirmPayment, completeCashPayment, getAllPayments, getUserPayments, refundPayment}
+module.exports = {createPayment, confirmPayment, completeCashPayment, getAllPayments, getUserPayments}
