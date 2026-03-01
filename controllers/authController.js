@@ -46,9 +46,12 @@ const protect = asyncErrorHandler(async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.SECRET_STR);
 
     const user = await User.findById(decoded.id);
-    if (!user) {
+    if(!user){
         const error = new customError('User not found', 401);
         next(error);
+    }
+    if(user.isBanned){
+        return next(new customError("Your account is banned", 403));
     }
 
     const isChanged = await user.isPasswordChanged(decoded.iat);
@@ -101,7 +104,7 @@ const login = asyncErrorHandler(async (req, res, next) => {
         const error = new customError("Please enter your email and password", 400);
         return next(error);
     }
-    const user = await User.findOne({ email: email }).select('+password')
+    const user = await User.findOne({ email: email }).select('+password +isBanned')
 
     if (!user || !(await user.comparePassword(password, user.password))) {
         const error = new customError("Incorrect email or password", 400);

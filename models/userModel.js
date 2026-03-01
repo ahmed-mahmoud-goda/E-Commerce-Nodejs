@@ -70,10 +70,6 @@ userSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-userSchema.pre(/^find/,function(next){
-  this.find({isBanned:{$ne:true}})
-})
-
 userSchema.methods.comparePassword = async function (pass, passDb) {
   return await bcrypt.compare(pass, passDb);
 };

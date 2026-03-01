@@ -33,7 +33,7 @@ const getAllProducts = asyncErrorHandler(async (req,res,next)=>{
         filter.category = req.query.category
     }
     
-    const products = await Product.find(filter).select('name price images ratingAverage ratingsCount').skip(skip).limit(limit)
+    const products = await Product.find(filter).select('name price images ratingsAverage ratingsCount').skip(skip).limit(limit)
 
     const totalProducts = await Product.countDocuments(filter);
     res.status(200).json({

@@ -15,7 +15,10 @@ router.route('/deliverers')
 router.route('/employees')
     .get(authController.protect,authController.restrict('manager'),userController.getAllEmployees)
 
-router.route('/:id')
-    .delete(authController.protect,authController.restrict('manager'),userController.banAccount)
+router.route('/ban/:id')
+    .patch(authController.protect,authController.restrict('manager'),userController.banAccount)
+
+router.route('/unban/:id')
+    .patch(authController.protect,authController.restrict('manager'),userController.unbanAccount)
 
 module.exports = router;

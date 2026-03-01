@@ -59,9 +59,9 @@ const editUserInfo = asyncErrorHandler(async (req,res,next)=>{
     }
     user.name = req.body.name || user.name;
     user.phone = req.body.phone || user.phone;
-    user.address.city = req.body.city || user.address.city;
-    user.address.street = req.body.street || user.address.street;
-    user.address.buildingNumber = req.body.buildingNumber || user.address.buildingNumber;
+    user.address.city = req.body.address.city || user.address.city;
+    user.address.street = req.body.address.street || user.address.street;
+    user.address.buildingNumber = req.body.address.buildingNumber || user.address.buildingNumber;
 
     await user.save();
 
@@ -86,8 +86,8 @@ const banAccount = asyncErrorHandler(async (req,res,next)=>{
     if(!user){
         return next(new customError("User not found",404));
     }
-    if(user.role != "customer"){
-        return next(new customError("Only users can be banned",403))
+    if(user.role == "manager"){
+        return next(new customError("Managers cannot be banned",403))
     }
     user.isBanned = true;
     let banExpires = null;
@@ -105,14 +105,30 @@ const banAccount = asyncErrorHandler(async (req,res,next)=>{
         to: user.email,
         subject: "You Are Banned",
         html: `
-            <h2>Your account has been suspended.</h2>
-            <p>${duration?`Your account has been banned for <strong>${duration} day</strong>.`:`Your account has been permanently banned.`}</p>
-            <p><strong>Reason:</strong> ${message || "Violation of rules"}</p>
-            <br>
-            <p>If you believe this is a mistake, please contact support.</p>
-            `
+        <h2>Your account has been suspended.</h2>
+        <p>${duration?`Your account has been banned for <strong>${duration} day</strong>.`:`Your account has been permanently banned.`}</p>
+        <p><strong>Reason:</strong> ${message || "Violation of rules"}</p>
+        <br>
+        <p>If you believe this is a mistake, please contact support.</p>
+        `
     });
     res.status(204).send()
 })
 
-module.exports = {getUserInfo, editUserInfo, deleteAccount, banAccount, getDeliverers, getAllEmployees}
+const unbanAccount = asyncErrorHandler(async(req,res,next)=>{
+    const user = await User.findById(req.params.id);
+    if(!user){
+        return next(new customError("User not found",404));
+    }
+    user.isBanned = false;
+    user.banExpires = null;
+    await user.save();
+    await sendEmail({
+        to: user.email,
+        subject: "Your Account Has Been Unbanned",
+        html: `
+            <h2>Your account will work again.</h2>
+            `
+    });
+})
+module.exports = {getUserInfo, editUserInfo, deleteAccount, banAccount, unbanAccount, getDeliverers, getAllEmployees}
