@@ -15,6 +15,9 @@ router.route('/deliverers')
 router.route('/employees')
     .get(authController.protect,authController.restrict('manager'),userController.getAllEmployees)
 
+router.route('/employees/:id')
+    .get(authController.protect,authController.restrict('manager'),userController.getEmployeeById)
+
 router.route('/ban/:id')
     .patch(authController.protect,authController.restrict('manager'),userController.banAccount)
 

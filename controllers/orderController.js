@@ -49,13 +49,15 @@ const getAllOrders = asyncErrorHandler(async (req,res,next)=>{
             filter.deliverer = { $ne: null };
         }
     }
-    if(req.user.role == "customer"){
+    else if(req.user.role == "customer"){
         filter.user = req.user._id;
     }
     else if(req.user.role == "deliverer"){
         filter.deliverer = req.user._id;
     }
-
+    if(["dispatcher","deliverer","stocker"].includes(req.user.role)){
+        filter.status = { $ne: "cancelled" };
+    }
     let query = Order.find(filter).sort({createdAt:-1}).skip(skip).limit(limit).populate("user", "name email");
     
     if(req.user.role != "customer"){

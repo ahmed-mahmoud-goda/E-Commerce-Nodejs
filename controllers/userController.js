@@ -8,14 +8,17 @@ const getAllEmployees = asyncErrorHandler(async (req,res,next)=>{
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const filter = {role:{$nin: ["manager","customer"]}}
+    const filter = {role:{$nin: ["manager","customer"]},isBanned:false}
     if(req.query.name){
         filter.name = {$regex:req.query.name, $options:"i"};
     }
     if(req.query.email){
         filter.email = {$regex:req.query.email, $options:"i"};
     }
-    const employees = await User.find(filter).select("-password").skip(skip).limit(limit);
+    if(req.query.isBanned){
+        filter.isBanned = req.query.isBanned == "true";
+    }
+    const employees = await User.find(filter).select("name email role").skip(skip).limit(limit);
     const employeeCount = await User.countDocuments(filter);
     res.status(200).json({
         status:"success",
@@ -24,6 +27,21 @@ const getAllEmployees = asyncErrorHandler(async (req,res,next)=>{
         pages: Math.ceil(employeeCount/limit),
         data:{
             employees
+        }
+    })
+})
+const getEmployeeById = asyncErrorHandler(async (req,res,next)=>{
+    const employee = await User.findById(req.params.id);
+    if(!employee){
+        return next(new customError("Employee not found",404));
+    }
+    if(["manager","customer"].includes(employee.role)){
+        return next(new customError("He is not an employee",400));
+    }
+    res.status(200).json({
+        status:"success",
+        data:{
+            employee
         }
     })
 })
@@ -42,7 +60,7 @@ const getUserInfo = asyncErrorHandler(async (req,res,next)=>{
 })
 
 const getDeliverers = asyncErrorHandler(async (req,res,next)=>{
-    const deliverers = await User.find({role:"deliverer"}).select("name email");
+    const deliverers = await User.find({role:"deliverer",isBanned:false}).select("name email");
     res.status(200).json({
         status: "success",
         count: deliverers.length,
@@ -59,10 +77,11 @@ const editUserInfo = asyncErrorHandler(async (req,res,next)=>{
     }
     user.name = req.body.name || user.name;
     user.phone = req.body.phone || user.phone;
-    user.address.city = req.body.address.city || user.address.city;
-    user.address.street = req.body.address.street || user.address.street;
-    user.address.buildingNumber = req.body.address.buildingNumber || user.address.buildingNumber;
-
+    if(req.body.address){
+        user.address.city = req.body.address.city || user.address.city;
+        user.address.street = req.body.address.street || user.address.street;
+        user.address.buildingNumber = req.body.address.buildingNumber || user.address.buildingNumber;
+    }
     await user.save();
 
     res.status(200).json({
@@ -106,7 +125,7 @@ const banAccount = asyncErrorHandler(async (req,res,next)=>{
         subject: "You Are Banned",
         html: `
         <h2>Your account has been suspended.</h2>
-        <p>${duration?`Your account has been banned for <strong>${duration} day</strong>.`:`Your account has been permanently banned.`}</p>
+        <p>${duration?`Your account has been banned for <strong>${duration} day(s).</strong>`:`Your account has been permanently banned.`}</p>
         <p><strong>Reason:</strong> ${message || "Violation of rules"}</p>
         <br>
         <p>If you believe this is a mistake, please contact support.</p>
@@ -130,5 +149,6 @@ const unbanAccount = asyncErrorHandler(async(req,res,next)=>{
             <h2>Your account will work again.</h2>
             `
     });
+    res.status(204).send();
 })
-module.exports = {getUserInfo, editUserInfo, deleteAccount, banAccount, unbanAccount, getDeliverers, getAllEmployees}
+module.exports = {getUserInfo, editUserInfo, deleteAccount, banAccount, unbanAccount, getDeliverers, getAllEmployees, getEmployeeById}
