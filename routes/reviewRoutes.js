@@ -4,7 +4,7 @@ const reviewController = require("./../controllers/reviewController.js")
 
 const router = express.Router();
 
-router.route('/product/:id')
+router.route('/product/:productId')
     .get(authController.protect,reviewController.getProductReviews)
     .post(authController.protect,authController.restrict("customer"),reviewController.addReview)
 
