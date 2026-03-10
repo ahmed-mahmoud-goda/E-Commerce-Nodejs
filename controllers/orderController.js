@@ -1,6 +1,7 @@
 const asyncErrorHandler = require("./../utils/asyncErrorHandler.js");
 const customError = require("./../utils/customError.js");
-const Order = require("./../models/orderModel.js")
+const Order = require("./../models/orderModel.js");
+const Cart = require("./../models/cartModel.js");
 
 const createOrder = asyncErrorHandler(async (req,res,next)=>{
     const { paymentMethod, deliveryDays = 3, deliveryFee = 10 } = req.body;
@@ -13,13 +14,13 @@ const createOrder = asyncErrorHandler(async (req,res,next)=>{
     const order = await Order.create({
         user: req.user.id,
         items: cart.items,
-        totalAmount: cart.totalAmount + deliveryFee,
+        totalAmount: cart.totalPrice + deliveryFee,
         paymentMethod,
         deliveryDate: new Date(Date.now() + deliveryDays*24*60*60*1000)
     });
 
     cart.items = [];
-    cart.totalAmount = 0;
+    cart.totalPrice = 0;
     await cart.save();
 
     res.status(201).json({
@@ -145,7 +146,7 @@ const cancelOrder = asyncErrorHandler(async (req,res,next)=>{
     if(['delivered','cancelled'].includes(order.status)){
         return next(new customError("Order can't be cancelled as it is already delivered/cancelled",400));
     }
-    else if(order.isPaid){
+    if(order.isPaid){
         const payment = await Payment.findOne({ order: order._id });
         if(payment){
             if (payment.status === "refunded") {

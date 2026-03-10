@@ -7,8 +7,7 @@ const router = express.Router();
 router.route('/')
     .get(authController.protect,authController.restrict('customer'),cartController.getCart)
 
-router.route('/:id')
-    .post(authController.protect,authController.restrict('customer'),cartController.addToCart)
-    .patch(authController.protect,authController.restrict('customer'),cartController.removeFromCart)
+router.route('/:productId')
+    .patch(authController.protect,authController.restrict('customer'),cartController.updateCartItems)
 
 module.exports = router;

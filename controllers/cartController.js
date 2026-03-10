@@ -1,6 +1,7 @@
 const asyncErrorHandler = require('./../utils/asyncErrorHandler.js')
 const customError = require('./../utils/customError.js')
 const Cart = require('./../models/cartModel.js')
+const Product = require('./../models/productModel.js')
 
 const calculateTotal = (cart) => {
   let sum = 0;
@@ -12,8 +13,9 @@ const calculateTotal = (cart) => {
   cart.totalPrice = sum;
 };
 
-const addToCart = asyncErrorHandler(async (req,res,next)=>{
-    const { productId, quantity = 1 } = req.body;
+const updateCartItems = asyncErrorHandler(async (req,res,next)=>{
+    const productId = req.params.productId;
+    const {quantity} = req.body;
 
     const product = await Product.findById(productId);
     if(!product){
@@ -22,6 +24,9 @@ const addToCart = asyncErrorHandler(async (req,res,next)=>{
 
     let cart = await Cart.findOne({ user: req.user._id });
     if(!cart){
+        if(quantity<=0){
+            return next(new customError("Cannot remove from empty cart",400))
+        }
         cart = await Cart.create({ user: req.user._id, items: [] });
     }
 
@@ -29,15 +34,22 @@ const addToCart = asyncErrorHandler(async (req,res,next)=>{
         (item) => item.product.toString() === productId
     );
     if(index>=0){
-        cart.items[itemIndex].quantity += quantity;
-        cart.items[itemIndex].total =cart.items[itemIndex].price *cart.items[itemIndex].quantity;
+        cart.items[index].quantity += quantity;
+        if(cart.items[index].quantity<=0){
+            cart.items.splice(index,1)
+        }
+        else{
+            cart.items[index].total =cart.items[index].price *cart.items[index].quantity;
+        }
     }
     else{
+        if(quantity<=0){
+            return next(new customError("Can't remove from item as it does not exist"));
+        }
         cart.items.push({
             product: productId,
             quantity,
-            price: product.price,
-            total: product.price * quantity
+            price: product.price
         });
     }
     calculateTotal(cart)
@@ -62,33 +74,5 @@ const getCart = asyncErrorHandler(async (req,res,next)=>{
         }
     });
 })
-const removeFromCart = asyncErrorHandler(async (req,res,next)=>{
-    const { productId } = req.body;
 
-    const cart = await Cart.findOne({ user: req.user._id });
-    if(!cart){
-        return next(new customError("Cart not found", 404));
-    }
-    const index = cart.items.findIndex(
-        (item) => item.product.toString() === productId
-    );
-    if(index==-1){
-        return next(new customError("Product not in cart", 404));
-    }
-    const product = cart.items[itemIndex];
-    product.quantity -= quantity;
-
-    if(item.quantity == 0) {
-        cart.items.splice(itemIndex, 1);
-    }
-    calculateTotal(cart);
-    await cart.save();
-    res.status(200).json({
-        status: "success",
-        data:{
-            cart
-        }
-    });
-})
-
-module.exports = {addToCart,getCart,removeFromCart}
+module.exports = {updateCartItems,getCart}

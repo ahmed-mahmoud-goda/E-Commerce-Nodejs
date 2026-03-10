@@ -18,10 +18,10 @@ router.route('/employees')
 router.route('/employees/:id')
     .get(authController.protect,authController.restrict('manager'),userController.getEmployeeById)
 
-router.route('/ban/:id')
+router.route('/:id/ban')
     .patch(authController.protect,authController.restrict('manager'),userController.banAccount)
 
-router.route('/unban/:id')
+router.route('/:id/unban')
     .patch(authController.protect,authController.restrict('manager'),userController.unbanAccount)
 
 module.exports = router;
