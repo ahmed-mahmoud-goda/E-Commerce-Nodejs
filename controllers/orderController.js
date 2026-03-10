@@ -2,6 +2,7 @@ const asyncErrorHandler = require("./../utils/asyncErrorHandler.js");
 const customError = require("./../utils/customError.js");
 const Order = require("./../models/orderModel.js");
 const Cart = require("./../models/cartModel.js");
+const User = require("./../models/userModel.js");
 
 const createOrder = asyncErrorHandler(async (req,res,next)=>{
     const { paymentMethod, deliveryDays = 3, deliveryFee = 10 } = req.body;
@@ -123,7 +124,7 @@ const assignDeliverer = asyncErrorHandler(async (req,res,next)=>{
         return next(new customError("Order not found", 404));
     }
     if(["delivered"].includes(order.status)){
-        return next(new customError("Cannot assign this order", 404));
+        return next(new customError("Cannot assign this order", 400));
     }
     const deliverer = await User.findById(delivererId);
     if(!deliverer || deliverer.role !== "deliverer"){
