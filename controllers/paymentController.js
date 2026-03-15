@@ -5,8 +5,10 @@ const Order = require("./../models/orderModel");
 const Payment = require("./../models/paymentModel.js");
 
 const createPayment = asyncErrorHandler(async (req,res,next)=>{
-    const { orderId, paymentMethod } = req.body;
-    const order = await Order.findbyId(orderId);
+    const { paymentMethod } = req.body;
+    const orderId = req.params.orderId;
+
+    const order = await Order.findById(orderId);
     if(!order){
         return next(new customError("Order not found",404))
     }
@@ -33,7 +35,12 @@ const createPayment = asyncErrorHandler(async (req,res,next)=>{
         res.status(201).json({
             status:"success",
             data:{
-                payment,
+                payment: {
+                    id: payment._id,
+                    amount: payment.amount,
+                    paymentMethod: payment.paymentMethod,
+                    status: payment.status
+                },
                 clientSecret
             }
         });
@@ -41,7 +48,7 @@ const createPayment = asyncErrorHandler(async (req,res,next)=>{
 })
 
 const confirmPayment = asyncErrorHandler(async (req,res,next)=>{
-    const { paymentIntentId } = req.body;
+    const paymentIntentId  = req.params.paymentIntentId;
     const payment = await Payment.findOne({transactionId: paymentIntentId}).populate('order');
     if(!payment){
         return next(new customError("Payment not found",404));
@@ -127,7 +134,7 @@ const getAllPayments = asyncErrorHandler(async (req,res,next)=>{
 })
 
 const getUserPayments = asyncErrorHandler(async (req,res,next)=>{
-    const payments = await Payment.find({ user: req.user.id }).populate("order");
+    const payments = await Payment.find({ user: req.user.id }).select("-user -transactionId ").populate("order", "-user ");
     res.status(200).json({
         status: "success",
         count: payments.length,

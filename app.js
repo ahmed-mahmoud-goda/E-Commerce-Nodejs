@@ -14,6 +14,7 @@ const reviewRoutes = require('./routes/reviewRoutes.js');
 const cartRoutes = require('./routes/cartRoutes.js');
 const orderRoutes = require('./routes/orderRoutes.js');
 const userRoutes = require('./routes/userRoutes.js');
+const paymentRoutes = require('./routes/paymentRoutes.js')
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/api/v1/reviews',reviewRoutes);
 app.use('/api/v1/cart',cartRoutes);
 app.use('/api/v1/orders',orderRoutes);
 app.use('/api/v1/user',userRoutes);
+app.use('/api/v1/payments',paymentRoutes);
 
 app.use((req,res,next)=>{
     const err = new CustomError(`URL: ${req.originalUrl} is not found`,404);

@@ -4,10 +4,7 @@ const paymentController = require("./../controllers/paymentController.js");
 
 const router = express.Router();
 
-router.route('/')
-    .post(authController.protect,paymentController.createPayment)
-
-router.route('/confirm')
+router.route('/confirm/:paymentIntentId')
     .post(authController.protect,paymentController.confirmPayment)
 
 router.route('/cash')
@@ -18,5 +15,8 @@ router.route('/')
 
 router.route('/my-payments')
     .get(authController.protect,paymentController.getUserPayments)
+
+router.route('/:orderId')
+    .post(authController.protect,paymentController.createPayment)
 
 module.exports = router;

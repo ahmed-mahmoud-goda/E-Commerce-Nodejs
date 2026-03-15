@@ -1,6 +1,8 @@
-const app = require('./app.js');
 const dotenv = require('dotenv');
+dotenv.config();
+
 const mongoose = require('mongoose');
+const app = require('./app.js');
 
 process.on('uncaughtException', (err) => {
     console.log(err.name, err.message);
@@ -8,7 +10,6 @@ process.on('uncaughtException', (err) => {
     process.exit(1);
 })
 
-dotenv.config();
 
 const connStr = process.env.LOCALCONNSTR;
 
